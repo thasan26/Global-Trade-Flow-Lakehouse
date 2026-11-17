@@ -1,0 +1,112 @@
+// =====================================================================
+// Global Trade Flow Lakehouse - Power BI DAX measures
+// Model: DirectQuery / Import from Databricks SQL Warehouse, catalog trade_lakehouse.gold
+//   Fact:  trade_partner_monthly, trade_sector_monthly, trade_forecast, partner_concentration
+//   Dim:   'Date' (calculated table below), silver.dim_country
+// Relationships:
+//   'Date'[Date] 1--* trade_partner_monthly[period_date]
+//   'Date'[Date] 1--* trade_sector_monthly[period_date]
+//   'Date'[Date] 1--* trade_forecast[period_date]
+//   dim_country[cty_code] 1--* trade_partner_monthly[cty_code]
+// =====================================================================
+
+// ---------- Date table (New Table) ----------
+Date =
+ADDCOLUMNS (
+    CALENDAR ( DATE ( 2019, 1, 1 ), DATE ( 2026, 12, 31 ) ),
+    "Year", YEAR ( [Date] ),
+    "Month", FORMAT ( [Date], "MMM" ),
+    "Month Number", MONTH ( [Date] ),
+    "Year-Month", FORMAT ( [Date], "YYYY-MM" ),
+    "Quarter", "Q" & QUARTER ( [Date] )
+)
+
+// ---------- Core totals ----------
+Exports = SUM ( trade_partner_monthly[exports_usd] )
+
+Imports = SUM ( trade_partner_monthly[imports_usd] )
+
+Total Trade = [Exports] + [Imports]
+
+Trade Balance = [Exports] - [Imports]
+
+Exports ($B) = DIVIDE ( [Exports], 1e9 )
+
+Imports ($B) = DIVIDE ( [Imports], 1e9 )
+
+Trade Balance ($B) = DIVIDE ( [Trade Balance], 1e9 )
+
+// ---------- Time intelligence ----------
+Imports PY = CALCULATE ( [Imports], SAMEPERIODLASTYEAR ( 'Date'[Date] ) )
+
+Exports PY = CALCULATE ( [Exports], SAMEPERIODLASTYEAR ( 'Date'[Date] ) )
+
+Imports YoY % = DIVIDE ( [Imports] - [Imports PY], [Imports PY] )
+
+Exports YoY % = DIVIDE ( [Exports] - [Exports PY], [Exports PY] )
+
+Imports YTD = TOTALYTD ( [Imports], 'Date'[Date] )
+
+Exports YTD = TOTALYTD ( [Exports], 'Date'[Date] )
+
+Imports 3M Rolling Avg =
+AVERAGEX (
+    DATESINPERIOD ( 'Date'[Date], MAX ( 'Date'[Date] ), -3, MONTH ),
+    [Imports]
+)
+
+// ---------- Partner analysis ----------
+Partner Share of Total Trade % =
+DIVIDE (
+    [Total Trade],
+    CALCULATE ( [Total Trade], ALL ( dim_country ) )
+)
+
+Partner Rank by Trade =
+RANKX ( ALL ( dim_country[country_name] ), [Total Trade], , DESC, DENSE )
+
+Top 5 Partner Share % =
+VAR Top5 =
+    TOPN ( 5, ALL ( dim_country[country_name] ), [Total Trade], DESC )
+RETURN
+    DIVIDE ( CALCULATE ( [Total Trade], Top5 ), CALCULATE ( [Total Trade], ALL ( dim_country ) ) )
+
+Deficit Partners Count =
+COUNTROWS ( FILTER ( VALUES ( dim_country[country_name] ), [Trade Balance] < 0 ) )
+
+// ---------- Sector analysis ----------
+Sector Value = SUM ( trade_sector_monthly[value_usd] )
+
+Sector Share % =
+DIVIDE (
+    [Sector Value],
+    CALCULATE ( [Sector Value], ALL ( trade_sector_monthly[sector], trade_sector_monthly[chapter_description] ) )
+)
+
+// ---------- Concentration ----------
+Import HHI =
+CALCULATE ( AVERAGE ( partner_concentration[hhi] ), partner_concentration[flow] = "imports" )
+
+Concentration Level =
+SWITCH (
+    TRUE (),
+    [Import HHI] >= 2500, "Highly concentrated",
+    [Import HHI] >= 1500, "Moderately concentrated",
+    "Unconcentrated"
+)
+
+// ---------- Forecast ----------
+Forecast = SUM ( trade_forecast[forecast_usd] )
+
+Actual (Backtest) = CALCULATE ( SUM ( trade_forecast[actual_usd] ), trade_forecast[split] = "backtest" )
+
+Forecast WAPE % =
+VAR Bt = FILTER ( trade_forecast, trade_forecast[split] = "backtest" )
+RETURN
+    DIVIDE (
+        SUMX ( Bt, ABS ( trade_forecast[actual_usd] - trade_forecast[forecast_usd] ) ),
+        SUMX ( Bt, trade_forecast[actual_usd] )
+    )
+
+Next 3M Forecast ($B) =
+DIVIDE ( CALCULATE ( [Forecast], trade_forecast[split] = "forecast" ), 1e9 )

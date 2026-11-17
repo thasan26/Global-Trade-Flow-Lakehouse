@@ -1,0 +1,5 @@
+# Extra libraries for the ML notebook on Databricks serverless compute
+# (Spark, Delta and pandas are already provided by the runtime).
+mlflow>=2.16
+scikit-learn>=1.4
+pyyaml>=6.0

@@ -1,0 +1,43 @@
+# Global Trade Flow Lakehouse - pipeline configuration
+# Values can be overridden with environment variables (see src/tradeflow/config.py).
+
+project: global-trade-flow-lakehouse
+
+# Unity Catalog namespace (used on Databricks). Locally, schemas are created
+# in the default Spark catalog with the same names.
+catalog: trade_lakehouse
+schemas:
+  bronze: bronze
+  silver: silver
+  gold: gold
+  ml: ml
+  ops: ops          # data-quality results, pipeline run log
+
+# Table format: "delta" on Databricks. Locally, "delta" requires the
+# delta-spark JARs; set TRADEFLOW_TABLE_FORMAT=parquet to run without them.
+table_format: delta
+
+ingestion:
+  mode: sample            # "sample" (bundled generator) or "census_api" (live)
+  start_period: "2019-01"
+  end_period: "2025-12"
+  flows: [exports, imports]
+  commodity_level: HS2
+  landing_path: data/landing
+  census_api_key_env: CENSUS_API_KEY   # optional; raises the API rate limit
+
+reference:
+  countries: data/reference/dim_country.csv
+  hs_chapters: data/reference/dim_hs_chapter.csv
+
+quality:
+  # Rows failing an "error" rule go to quarantine; "warn" rules are only logged.
+  max_quarantine_ratio: 0.02          # fail the run if more than 2% of rows are quarantined
+
+ml:
+  experiment_name: /Shared/trade-flow-forecasting
+  registered_model_name: trade_forecaster
+  train_end_period: "2024-12"
+  test_end_period: "2025-12"
+  forecast_horizon_months: 3
+  random_state: 42

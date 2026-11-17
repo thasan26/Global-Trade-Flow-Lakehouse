@@ -1,0 +1,21 @@
+hs_chapter,chapter_description,sector
+02,Meat and edible meat offal,Agriculture & Food
+10,Cereals,Agriculture & Food
+12,Oil seeds and oleaginous fruits,Agriculture & Food
+27,Mineral fuels and oils,Energy
+29,Organic chemicals,Chemicals & Pharma
+30,Pharmaceutical products,Chemicals & Pharma
+39,Plastics and articles thereof,Chemicals & Pharma
+44,Wood and articles of wood,Materials & Metals
+61,Apparel and clothing (knitted),Consumer Goods
+62,Apparel and clothing (not knitted),Consumer Goods
+71,Precious stones and metals,Materials & Metals
+72,Iron and steel,Materials & Metals
+73,Articles of iron or steel,Materials & Metals
+84,Nuclear reactors boilers and machinery,Machinery & Electronics
+85,Electrical machinery and equipment,Machinery & Electronics
+87,Vehicles other than railway,Transportation
+88,Aircraft and spacecraft,Transportation
+90,Optical and medical instruments,Machinery & Electronics
+94,Furniture and bedding,Consumer Goods
+95,Toys games and sports equipment,Consumer Goods

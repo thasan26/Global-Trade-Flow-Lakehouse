@@ -1,0 +1,26 @@
+cty_code,country_name,iso3,region,trade_agreement
+1220,Canada,CAN,North America,USMCA
+2010,Mexico,MEX,North America,USMCA
+5700,China,CHN,East Asia & Pacific,None
+5880,Japan,JPN,East Asia & Pacific,None
+5800,South Korea,KOR,East Asia & Pacific,KORUS
+5830,Taiwan,TWN,East Asia & Pacific,None
+5520,Vietnam,VNM,East Asia & Pacific,None
+5570,Malaysia,MYS,East Asia & Pacific,None
+5490,Thailand,THA,East Asia & Pacific,None
+5590,Singapore,SGP,East Asia & Pacific,USSFTA
+6021,Australia,AUS,East Asia & Pacific,AUSFTA
+5330,India,IND,South Asia,None
+4280,Germany,DEU,Europe,None
+4120,United Kingdom,GBR,Europe,None
+4279,France,FRA,Europe,None
+4759,Italy,ITA,Europe,None
+4210,Netherlands,NLD,Europe,None
+4190,Ireland,IRL,Europe,None
+4231,Belgium,BEL,Europe,None
+4700,Spain,ESP,Europe,None
+4419,Switzerland,CHE,Europe,None
+5081,Israel,ISR,Middle East & North Africa,USIFTA
+5170,Saudi Arabia,SAU,Middle East & North Africa,None
+3510,Brazil,BRA,Latin America & Caribbean,None
+3010,Colombia,COL,Latin America & Caribbean,CTPA

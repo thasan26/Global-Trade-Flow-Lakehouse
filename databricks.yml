@@ -1,0 +1,53 @@
+# Databricks Asset Bundle: deploys the pipeline as a scheduled Lakeflow Job.
+#   databricks bundle validate
+#   databricks bundle deploy -t dev
+#   databricks bundle run trade_flow_pipeline -t dev
+bundle:
+  name: global-trade-flow-lakehouse
+
+variables:
+  catalog:
+    description: Unity Catalog that holds the medallion schemas
+    default: trade_lakehouse
+  ingestion_mode:
+    default: census_api
+
+resources:
+  jobs:
+    trade_flow_pipeline:
+      name: "[${bundle.target}] Global Trade Flow Lakehouse"
+      description: Monthly U.S. trade ingestion -> Bronze -> Silver -> Gold -> ML forecast
+      schedule:
+        # Census publishes monthly trade data in the first week of the month (+ ~35 days lag)
+        quartz_cron_expression: "0 0 9 10 * ?"
+        timezone_id: America/New_York
+      email_notifications:
+        on_failure: ["${workspace.current_user.userName}"]
+      max_concurrent_runs: 1
+      tasks:
+        - task_key: ingest
+          notebook_task:
+            notebook_path: ./notebooks/01_ingest_to_landing.py
+            base_parameters: { mode: "${var.ingestion_mode}" }
+        - task_key: bronze
+          depends_on: [{ task_key: ingest }]
+          notebook_task: { notebook_path: ./notebooks/02_bronze.py }
+        - task_key: silver
+          depends_on: [{ task_key: bronze }]
+          notebook_task: { notebook_path: ./notebooks/03_silver.py }
+        - task_key: gold
+          depends_on: [{ task_key: silver }]
+          notebook_task: { notebook_path: ./notebooks/04_gold.py }
+        - task_key: ml_forecast
+          depends_on: [{ task_key: gold }]
+          notebook_task: { notebook_path: ./notebooks/05_ml_forecast.py }
+      # No cluster spec: tasks run on serverless compute (works in Databricks Free Edition).
+
+targets:
+  dev:
+    mode: development
+    default: true
+  prod:
+    mode: production
+    variables:
+      catalog: trade_lakehouse
